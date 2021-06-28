@@ -704,7 +704,6 @@ d-i pkgsel/include string openssh-server
 d-i pkgsel/upgrade select none
 
 popularity-contest popularity-contest/participate boolean false
-
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/bootdev string default
 d-i grub-installer/force-efi-extra-removable boolean true
@@ -713,8 +712,11 @@ d-i debian-installer/exit/reboot boolean true
 d-i preseed/late_command string \
 in-target /bin/sh -c "mkdir -m 700 /root/.ssh ; echo 'ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAn1kYw1b/pghj3piSaALrHcXXdPrRgYZ0iUoYVyZPahT6m0qjfK2NjovC7iVeNnfAeu6afr/dCgJEN4dbimy4mgM28iXDF+NPl4fmxLHeguR+Y9Sr+nlVPb3Uep4XPvw1cvdQGAFQBg157R51wPGzOC5+DrpGZlI3rTZb6LMK/eyPoI+3Oi/irfCWq4pK4bQKoLoACkSFzG2h9PHTxUTOIOhc3hsu6uTYxspk5ZifqUyHPtdRvMFYp/OyT4v7VzFoxFGzfNUFa8TuM2VXg59L02WDSPAXig46L+cNyWGRfBG6IX56uqVNslWtfeR5+PI/g7ViVprJU+ncJgn5HC6zfw== rsa-key-20201123' > /root/.ssh/authorized_keys ; chmod 600 /root/.ssh/authorized_keys"; \
 in-target /bin/sh -c 'sed -i "s/^#PermitRootLogin.*\$/PermitRootLogin prohibit-password/g" /etc/ssh/sshd_config'; \
-in-target /bin/sh -c 'sed -i "s/^#Port.*\$/Port 26371/g" /etc/ssh/sshd_config';
+in-target /bin/sh -c 'sed -i "s/^#Port.*\$/Port 26371/g" /etc/ssh/sshd_config'; \
+in-target /bin/sh -c 'sed -i "s/^#PasswordAuthentication.*\$/#PasswordAuthentication no/g" /etc/ssh/sshd_config'; \
+in-target /bin/sh -c 'sed -i "s/^#PubkeyAuthentication.*\$/PubkeyAuthentication yes/g" /etc/ssh/sshd_config';
 EOF
+
 
 [[ "$loaderMode" != "0" ]] && AutoNet='1'
 
