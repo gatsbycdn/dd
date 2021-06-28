@@ -18,6 +18,7 @@ export ipAddr=''
 export ipMask=''
 export ipGate=''
 export Relese=''
+export FirmwareImage=''
 export ddMode='0'
 export setNet='0'
 export setRDP='0'
@@ -125,9 +126,12 @@ while [[ $# -ge 1 ]]; do
       tmpSSL="$1"
       shift
       ;;
-    -firmware)
+    -firmware|--cdimage)
       shift
       IncFirmware="1"
+	  shift
+      FirmwareImage="$1"
+	  shift
       ;;
     --ipv6)
       shift
@@ -326,7 +330,7 @@ if [[ "$SpikCheckDIST" == '0' ]]; then
 fi
 
 [[ "$ddMode" == '1' ]] && {
-  export SSL_SUPPORT='https://raw.githubusercontent.com/veip007/dd/master/wget_udeb_amd64.tar.gz';
+  export SSL_SUPPORT='https://github.com/veip007/dd/raw/master/wget_udeb_amd64.tar.gz';
   if [[ -n "$tmpURL" ]]; then
     DDURL="$tmpURL"
     echo "$DDURL" |grep -q '^http://\|^ftp://\|^https://';
@@ -420,8 +424,13 @@ else
 fi
 if [[ "$linux_relese" == 'debian' ]]; then
   if [[ "$IncFirmware" == '1' ]]; then
-    wget --no-check-certificate -qO '/boot/firmware.cpio.gz' "http://cdimage.debian.org/cdimage/unofficial/non-free/firmware/${DIST}/current/firmware.cpio.gz"
-    [[ $? -ne '0' ]] && echo -ne "\033[31mError! \033[0mDownload 'firmware' for \033[33m$linux_relese\033[0m failed! \n" && exit 1
+    if [[ "$FirmwareImage" == 'ustc' ]]; then
+      wget --no-check-certificate -qO '/boot/firmware.cpio.gz' "https://mirrors.ustc.edu.cn/debian-cdimage/unofficial/non-free/firmware/${DIST}/current/firmware.cpio.gz"
+      [[ $? -ne '0' ]] && echo -ne "\033[31mError! \033[0mDownload 'firmware' for \033[33m$linux_relese\033[0m failed! \n" && exit 1
+    elif [[ "$FirmwareImage" == '' ]]; then
+      wget --no-check-certificate -qO '/boot/firmware.cpio.gz' "http://cdimage.debian.org/cdimage/unofficial/non-free/firmware/${DIST}/current/firmware.cpio.gz"
+      [[ $? -ne '0' ]] && echo -ne "\033[31mError! \033[0mDownload 'firmware' for \033[33m$linux_relese\033[0m failed! \n" && exit 1
+    fi
   fi
   if [[ "$ddMode" == '1' ]]; then
     vKernel_udeb=$(wget --no-check-certificate -qO- "http://$DISTMirror/dists/$DIST/main/installer-$VER/current/images/udeb.list" |grep '^acpi-modules' |head -n1 |grep -o '[0-9]\{1,2\}.[0-9]\{1,2\}.[0-9]\{1,2\}-[0-9]\{1,2\}' |head -n1)
@@ -671,7 +680,7 @@ d-i time/zone string US/Eastern
 d-i clock-setup/ntp boolean true
 
 d-i preseed/early_command string anna-install libfuse2-udeb fuse-udeb ntfs-3g-udeb fuse-modules-${vKernel_udeb}-amd64-di
-d-i partman/early_command string \
+d-i partman/early_command string [[ -n "\$(blkid -t TYPE='vfat' -o device)" ]] && umount "\$(blkid -t TYPE='vfat' -o device)"; \
 debconf-set partman-auto/disk "\$(list-devices disk |head -n1)"; \
 wget -qO- '$DDURL' |gunzip -dc |/bin/dd of=\$(list-devices disk |head -n1); \
 mount.ntfs-3g \$(list-devices partition |head -n1) /mnt; \
